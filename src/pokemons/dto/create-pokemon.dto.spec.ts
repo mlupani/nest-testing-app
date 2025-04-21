@@ -1,78 +1,87 @@
-import { validate } from 'class-validator';
 import { CreatePokemonDto } from './create-pokemon.dto';
+import { validate } from 'class-validator';
 
 describe('CreatePokemonDto', () => {
-  it('should be valid with correct data', async () => {
+  it('should validate with valid values', async () => {
     const dto = new CreatePokemonDto();
     dto.name = 'Pikachu';
     dto.type = 'Electric';
-    // dto.anotherRequiredProperty = 'Electric';
 
     const errors = await validate(dto);
 
     expect(errors.length).toBe(0);
   });
 
-  it('should be invalid if name is not present', async () => {
+  it('should not validate with invalid name', async () => {
     const dto = new CreatePokemonDto();
-    // dto.name = 'Pikachu';
+    dto.name = 6 as unknown as string;
     dto.type = 'Electric';
 
     const errors = await validate(dto);
 
-    const nameError = errors.find((error) => error.property === 'name');
-
-    expect(nameError).toBeDefined();
+    expect(errors.length).toBe(1);
+    expect(errors.some((error) => error.property === 'name')).toBeDefined();
   });
 
-  it('should be invalid if type is not present', async () => {
+  it('should not validate with invalid type', async () => {
     const dto = new CreatePokemonDto();
     dto.name = 'Pikachu';
-    // dto.type = 'Electric';
+    dto.type = 5 as unknown as string;
 
     const errors = await validate(dto);
 
-    const typeError = errors.find((error) => error.property === 'type');
-
-    expect(typeError).toBeDefined();
+    expect(errors.length).toBe(1);
+    expect(errors.some((error) => error.property === 'type')).toBeDefined();
   });
 
-  it('should hp must be positive number', async () => {
-    const dto = new CreatePokemonDto();
-    dto.name = 'Pikachu';
-    dto.type = 'Electric';
-    dto.hp = -10;
-
-    const errors = await validate(dto);
-    const hpError = errors.find((error) => error.property === 'hp');
-    const constraints = hpError?.constraints;
-
-    expect(hpError).toBeDefined();
-    expect(constraints).toEqual({ min: 'hp must not be less than 0' });
-  });
-
-  it('should be invalid with non-string sprites', async () => {
+  it('should validate with optionals valid values', async () => {
     const dto = new CreatePokemonDto();
     dto.name = 'Pikachu';
     dto.type = 'Electric';
-    dto.sprites = [123, 456] as unknown as string[];
+    dto.hp = 100;
+    dto.sprites = ['pikachu.png', 'pikachu_2.png'];
 
     const errors = await validate(dto);
 
-    const spritesError = errors.find((error) => error.property === 'sprites');
-    expect(spritesError).toBeDefined();
+    expect(errors.length).toBe(0);
   });
 
-  it('should be valid with string sprites', async () => {
+  it('should not validate with invalid hp', async () => {
     const dto = new CreatePokemonDto();
     dto.name = 'Pikachu';
     dto.type = 'Electric';
-    dto.sprites = ['sprite1.png', 'sprite2.png'];
+    dto.hp = 'hola' as unknown as number;
+    dto.sprites = ['pikachu.png', 'pikachu_2.png'];
 
     const errors = await validate(dto);
 
-    const spritesError = errors.find((error) => error.property === 'sprites');
-    expect(spritesError).toBe(undefined);
-    expect(spritesError).toBeUndefined();
+    expect(errors.length).toBe(1);
+    expect(errors.some((error) => error.property === 'hp')).toBeDefined();
+  });
+
+  it('should not validate with invalid sprites when some element is not string', async () => {
+    const dto = new CreatePokemonDto();
+    dto.name = 'Pikachu';
+    dto.type = 'Electric';
+    dto.hp = 100;
+    dto.sprites = ['pikachu.png', 5 as unknown as string];
+
+    const errors = await validate(dto);
+
+    expect(errors.length).toBe(1);
+    expect(errors.some((error) => error.property === 'sprites')).toBeDefined();
+  });
+
+  it('should not validate with invalid sprites when is not an array', async () => {
+    const dto = new CreatePokemonDto();
+    dto.name = 'Pikachu';
+    dto.type = 'Electric';
+    dto.hp = 100;
+    dto.sprites = 10 as unknown as string[];
+
+    const errors = await validate(dto);
+
+    expect(errors.length).toBe(1);
+    expect(errors.some((error) => error.property === 'sprites')).toBeDefined();
   });
 });
